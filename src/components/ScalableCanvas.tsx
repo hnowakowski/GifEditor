@@ -1,12 +1,6 @@
-export default ScalableCanvas;
-import ImageLoadButton from './ImageLoadBtn';
-import { useState } from 'react';
 
-function ScalableCanvas(){
-    
-    
+export default function ScalableCanvas(){
     return (<>
-        <canvas ></canvas>
-        <h1>POOP</h1>
+        <canvas hidden></canvas>
     </>);
 };

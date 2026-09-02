@@ -1,17 +1,16 @@
 import { useState } from 'react';
-import ImageLoadButton from './ImageLoadBtn';
+import FileLoadArea from './FileLoadArea';
 import ScalableCanvas from './ScalableCanvas';
 
-function ImageManipulatorParent(){
+export default function ImageManipulatorParent(){
     const [img, setImg] = useState("");
-    
+    // TODO: make the temp canvas hidden later
     return (
         <>
-        <ImageLoadButton imgCallback={setImg}/>
-        <img id="imgPreview"></img>
+        <FileLoadArea imgCallback={setImg}/>
+        <div id="imgPreview"></div>
         <ScalableCanvas/>
+        <canvas id="tempCanvas"></canvas> 
         </>
     )
 }
-
-export default ImageManipulatorParent;

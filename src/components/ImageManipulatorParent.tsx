@@ -11,6 +11,7 @@ export default function ImageManipulatorParent(){
         <ScalableCanvas/>
         <canvas id="currentStateCanvas" hidden></canvas> 
         <canvas id="deltaCanvas" hidden></canvas>
+        <img id="output"></img>
         </>
     )
 }

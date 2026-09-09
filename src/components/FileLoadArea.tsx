@@ -1,4 +1,6 @@
 import { parseGIF, decompressFrames } from "gifuct-js";
+//import { GIFEncoder, quantize, applyPalette } from "gifenc";
+//import {GIFEncoder } from "gif.js"; 
 
 const fr = new FileReader();
 
@@ -21,6 +23,7 @@ function readFile(imgCallback: Function){
         fr.addEventListener("load", () => {
             const buffer = fr.result as ArrayBuffer;
             if (buffer){
+                // decode into pngs
                 const gif = parseGIF(buffer);
                 currentStateCanvas.height = gif.lsd.height;
                 currentStateCanvas.width = gif.lsd.width;
@@ -36,7 +39,6 @@ function readFile(imgCallback: Function){
                         deltaCanvas.height = dims.height;
                         imageData = deltaCtx.createImageData(dims.width, dims.height);
                     }
-                    
                     imageData.data.set(frames[i].patch);
                     deltaCtx.putImageData(imageData, 0, 0);
 
@@ -60,7 +62,73 @@ function readFile(imgCallback: Function){
                     ctx.drawImage(currentStateCanvas, 0, 0);
                     imgPreview.appendChild(canvas);
                 }
+                // TODO: try jsgif???
+                var gifOut = new (window as any).GIFEncoder();
+                gifOut.setRepeat(0);
+                gifOut.setDelay(frames[0].delay);
+                gifOut.start();
+                for (var i = 0; i < frames.length; i++){
+                        const c = document.getElementById("c"+i)! as HTMLCanvasElement;
+                        const ctx = c.getContext("2d")!;
+                        gifOut.addFrame(ctx);
+                        console.log("frame "+ i);
+                }
+                gifOut.finish();
+                gifOut.download("download.gif");
+
+                // gifjs
+                // var gifOut = new GIFEncoder();
+                // gifOut.writeHeader();
+                // gifOut.setRepeat(0); //infinite loop
+                // gifOut.setDelay(frames[0].delay);
+
+                // for (var i = 0; i < frames.length; i++){
+                //     const c = document.getElementById("c"+i)! as HTMLCanvasElement;
+                //     const ctx = c.getContext("2d")!;
+                //     gifOut.addFrame(ctx.getImageData(0, 0, gif.lsd.width, gif.lsd.height).data);
+                //     console.log("frame "+ i);
+                // }
+                // gifOut.finish();
+                // const outBuffer = Uint8Array.from(gifOut.stream().getData());
+                // console.log(outBuffer);
+                // // outImg.src = thing;
+
+
+                // gifenc !!!!
+                // // encode back into a gif
+                // const gifOut = GIFEncoder();
+                // for (var i = 0; i < frames.length; i++){
+                //     const c = document.getElementById("c"+i)! as HTMLCanvasElement;
+                //     const ctx = c.getContext("2d")!;
+                //     const frameData = new Uint8Array(ctx.getImageData(0, 0, gif.lsd.width, gif.lsd.height).data.buffer);
+
+                //     const format = "rgb444";
+                //     const palette = quantize(frameData, 256, {format});
+                //     const index = applyPalette(frameData, palette, format);
+                //     const delay = frames[i].delay;
+
+                //     gifOut.writeFrame(index, gif.lsd.width, gif.lsd.height, {palette, delay});
+                //     console.log("frame "+ i);
+                // }
+                // gifOut.finish();
+
+                // // Get the Uint8Array output of your binary GIF file
+                // const output = gifOut.bytes();
+                // console.log(output);
+                // // TODO: fix the output format because it's not being displayed properly
+                // const outImg = document.getElementById("output") as HTMLImageElement;
+                // const blobObj = new Blob(output, {type: 'image/gif'});
+                // console.log(blobObj);
+                // const thing = URL.createObjectURL(blobObj);
+                // outImg.src = thing;
+                // const anchor = document.createElement("a");
+                // anchor.href = thing;
+                // anchor.download = 'poop.gif';
+                // anchor.click();
             }
+            
+
+
         })
     }
     else{

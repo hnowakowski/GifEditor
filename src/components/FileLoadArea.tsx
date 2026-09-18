@@ -1,10 +1,8 @@
-import { parseGIF, decompressFrames } from "gifuct-js";
-//import { GIFEncoder, quantize, applyPalette } from "gifenc";
-//import {GIFEncoder } from "gif.js"; 
+import { parseGIF, decompressFrames, type ParsedGif, type ParsedFrame } from "gifuct-js";
 
 const fr = new FileReader();
 
-function readFile(imgCallback: Function){
+function readFile(gifCallback: Function, framesCallback: Function){
     const imgPreview = document.getElementById("imgPreview") as HTMLImageElement;
     const fileUpload = document.getElementById("fileUpload") as HTMLInputElement;
 
@@ -25,11 +23,12 @@ function readFile(imgCallback: Function){
             if (buffer){
                 // decode into pngs
                 const gif = parseGIF(buffer);
+                gifCallback(gif); // update global gif
                 currentStateCanvas.height = gif.lsd.height;
                 currentStateCanvas.width = gif.lsd.width;
                 const frames = decompressFrames(gif, true);
                 // frame.patch is essentially the raw uint8array with difference color info
-                
+                framesCallback(frames); // update global frames array
                 let imageData;
                 for (let i = 0; i < frames.length; i++){
                     const dims = frames[i].dims;
@@ -62,73 +61,7 @@ function readFile(imgCallback: Function){
                     ctx.drawImage(currentStateCanvas, 0, 0);
                     imgPreview.appendChild(canvas);
                 }
-                // TODO: try jsgif???
-                var gifOut = new (window as any).GIFEncoder();
-                gifOut.setRepeat(0);
-                gifOut.setDelay(frames[0].delay);
-                gifOut.start();
-                for (var i = 0; i < frames.length; i++){
-                        const c = document.getElementById("c"+i)! as HTMLCanvasElement;
-                        const ctx = c.getContext("2d")!;
-                        gifOut.addFrame(ctx);
-                        console.log("frame "+ i);
-                }
-                gifOut.finish();
-                gifOut.download("download.gif");
-
-                // gifjs
-                // var gifOut = new GIFEncoder();
-                // gifOut.writeHeader();
-                // gifOut.setRepeat(0); //infinite loop
-                // gifOut.setDelay(frames[0].delay);
-
-                // for (var i = 0; i < frames.length; i++){
-                //     const c = document.getElementById("c"+i)! as HTMLCanvasElement;
-                //     const ctx = c.getContext("2d")!;
-                //     gifOut.addFrame(ctx.getImageData(0, 0, gif.lsd.width, gif.lsd.height).data);
-                //     console.log("frame "+ i);
-                // }
-                // gifOut.finish();
-                // const outBuffer = Uint8Array.from(gifOut.stream().getData());
-                // console.log(outBuffer);
-                // // outImg.src = thing;
-
-
-                // gifenc !!!!
-                // // encode back into a gif
-                // const gifOut = GIFEncoder();
-                // for (var i = 0; i < frames.length; i++){
-                //     const c = document.getElementById("c"+i)! as HTMLCanvasElement;
-                //     const ctx = c.getContext("2d")!;
-                //     const frameData = new Uint8Array(ctx.getImageData(0, 0, gif.lsd.width, gif.lsd.height).data.buffer);
-
-                //     const format = "rgb444";
-                //     const palette = quantize(frameData, 256, {format});
-                //     const index = applyPalette(frameData, palette, format);
-                //     const delay = frames[i].delay;
-
-                //     gifOut.writeFrame(index, gif.lsd.width, gif.lsd.height, {palette, delay});
-                //     console.log("frame "+ i);
-                // }
-                // gifOut.finish();
-
-                // // Get the Uint8Array output of your binary GIF file
-                // const output = gifOut.bytes();
-                // console.log(output);
-                // // TODO: fix the output format because it's not being displayed properly
-                // const outImg = document.getElementById("output") as HTMLImageElement;
-                // const blobObj = new Blob(output, {type: 'image/gif'});
-                // console.log(blobObj);
-                // const thing = URL.createObjectURL(blobObj);
-                // outImg.src = thing;
-                // const anchor = document.createElement("a");
-                // anchor.href = thing;
-                // anchor.download = 'poop.gif';
-                // anchor.click();
             }
-            
-
-
         })
     }
     else{
@@ -136,13 +69,41 @@ function readFile(imgCallback: Function){
     }
 }
 
-interface FileLoadAreaProps{
-    imgCallback: React.Dispatch<React.SetStateAction<string>>
+function serializeGif(globalFrames?: ParsedFrame[]){
+        if(!globalFrames){
+            alert("Frames not parsed yet!");
+            return;
+        }
+
+        // jsgif
+        var gifOut = new (window as any).GIFEncoder(); //hacky way of including jsgif
+        // it's recommended to be included in the index html file so i'm grabbing it from there
+        gifOut.setRepeat(0);
+        gifOut.setDelay(globalFrames[0].delay);
+        gifOut.start();
+        for (var i = 0; i < globalFrames.length; i++){
+                const c = document.getElementById("c"+i)! as HTMLCanvasElement;
+                const ctx = c.getContext("2d")!;
+                gifOut.addFrame(ctx);
+                console.log("frame "+ i);
+        }
+        gifOut.finish();
+        gifOut.download("download.gif");
 }
 
-export default function FileLoadArea({imgCallback}: FileLoadAreaProps){
+interface FileLoadAreaProps{
+    gifCallback: React.Dispatch<React.SetStateAction<ParsedGif | undefined>>;
+    framesCallback: React.Dispatch<React.SetStateAction<ParsedFrame[] | undefined>>;
+    globalGif?: ParsedGif;
+    globalFrames?: ParsedFrame[];
+}
+
+export default function FileLoadArea(props: FileLoadAreaProps){
     return (
-        <input type="file" accept=".gif" id="fileUpload"
-         onChange={() => {readFile(imgCallback)}} />
+        <>
+            <input type="file" accept=".gif" id="fileUpload"
+            onChange={() => {readFile(props.gifCallback, props.framesCallback)}} />
+            <button onClick={() => {serializeGif(props.globalFrames)}}>DOWNLOAD</button>
+        </>
     )
 }

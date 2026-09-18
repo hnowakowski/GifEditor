@@ -1,12 +1,14 @@
 import { useState } from 'react';
+import type { ParsedGif, ParsedFrame } from 'gifuct-js';
 import FileLoadArea from './FileLoadArea';
 import ScalableCanvas from './ScalableCanvas';
 
 export default function ImageManipulatorParent(){
-    const [img, setImg] = useState("");
+    const [gif, setGif] = useState<ParsedGif>();
+    const [frames, setFrames] = useState<ParsedFrame[]>()
     return (
         <>
-        <FileLoadArea imgCallback={setImg}/>
+        <FileLoadArea gifCallback={setGif} framesCallback={setFrames} globalGif={gif} globalFrames={frames}/>
         <div id="imgPreview"></div>
         <ScalableCanvas/>
         <canvas id="currentStateCanvas" hidden></canvas> 
